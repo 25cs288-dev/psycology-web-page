@@ -1,0 +1,2138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MindSense - Customer Mood Assessment</title>
+
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+
+            min-height: 100vh;
+
+            color: white;
+
+            background:
+                linear-gradient(
+                    rgba(10, 5, 30, 0.88),
+                    rgba(15, 8, 40, 0.92)
+                ),
+                url("https://images.unsplash.com/photo-1474418397713-7ede4a6c7e15?auto=format&fit=crop&w=2000&q=80");
+
+            background-size: cover;
+
+            background-position: center;
+
+            background-attachment: fixed;
+
+            overflow-x: hidden;
+
+        }
+
+
+        /* ================= BACKGROUND SHAPES ================= */
+
+        .shape {
+
+            position: fixed;
+
+            border-radius: 50%;
+
+            filter: blur(2px);
+
+            opacity: 0.25;
+
+            pointer-events: none;
+
+            z-index: 0;
+
+        }
+
+        .shape1 {
+
+            width: 180px;
+            height: 180px;
+
+            background: #00f5d4;
+
+            top: 10%;
+
+            left: 5%;
+
+            animation: float1 8s infinite ease-in-out;
+
+        }
+
+        .shape2 {
+
+            width: 250px;
+            height: 250px;
+
+            background: #9b5de5;
+
+            right: 5%;
+
+            top: 20%;
+
+            animation: float2 10s infinite ease-in-out;
+
+        }
+
+        .shape3 {
+
+            width: 140px;
+            height: 140px;
+
+            background: #f15bb5;
+
+            left: 40%;
+
+            bottom: 5%;
+
+            animation: float3 7s infinite ease-in-out;
+
+        }
+
+        @keyframes float1 {
+
+            0%,100% {
+                transform: translate(0,0);
+            }
+
+            50% {
+                transform: translate(80px,60px);
+            }
+
+        }
+
+        @keyframes float2 {
+
+            0%,100% {
+                transform: translate(0,0) scale(1);
+            }
+
+            50% {
+                transform: translate(-80px,80px) scale(1.2);
+            }
+
+        }
+
+        @keyframes float3 {
+
+            0%,100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-100px);
+            }
+
+        }
+
+
+        /* ================= MAIN ================= */
+
+        .container {
+
+            width: 92%;
+
+            max-width: 1200px;
+
+            margin: auto;
+
+            position: relative;
+
+            z-index: 2;
+
+        }
+
+
+        /* ================= HEADER ================= */
+
+        header {
+
+            text-align: center;
+
+            padding: 45px 20px 25px;
+
+        }
+
+        .logo {
+
+            display: inline-block;
+
+            font-size: 20px;
+
+            font-weight: bold;
+
+            letter-spacing: 3px;
+
+            padding: 10px 20px;
+
+            border-radius: 30px;
+
+            border: 1px solid rgba(0,245,212,0.4);
+
+            background: rgba(0,245,212,0.1);
+
+            color: #00f5d4;
+
+            animation: logoPulse 3s infinite;
+
+        }
+
+        @keyframes logoPulse {
+
+            0%,100% {
+                box-shadow: 0 0 10px rgba(0,245,212,0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(0,245,212,0.6);
+            }
+
+        }
+
+        header h1 {
+
+            margin-top: 20px;
+
+            font-size: 50px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #00f5d4,
+                    #9b5de5,
+                    #f15bb5
+                );
+
+            -webkit-background-clip: text;
+
+            color: transparent;
+
+        }
+
+        header p {
+
+            color: #ccc;
+
+            margin-top: 12px;
+
+            font-size: 16px;
+
+        }
+
+
+        /* ================= GLASS CARD ================= */
+
+        .glass {
+
+            background:
+                rgba(255,255,255,0.07);
+
+            border:
+
+                1px solid
+                rgba(255,255,255,0.15);
+
+            backdrop-filter: blur(15px);
+
+            border-radius: 25px;
+
+            box-shadow:
+                0 20px 60px rgba(0,0,0,0.3);
+
+        }
+
+
+        /* ================= MOOD VISUALIZATION ================= */
+
+        .mind-visual {
+
+            margin-top: 25px;
+
+            padding: 35px;
+
+            position: relative;
+
+            overflow: hidden;
+
+        }
+
+        .visual-header {
+
+            text-align: center;
+
+            margin-bottom: 20px;
+
+        }
+
+        .visual-header span {
+
+            color: #00f5d4;
+
+            font-size: 12px;
+
+            letter-spacing: 3px;
+
+        }
+
+        .visual-header h2 {
+
+            margin-top: 10px;
+
+            font-size: 30px;
+
+        }
+
+        .visual-header p {
+
+            color: #aaa;
+
+            margin-top: 8px;
+
+        }
+
+
+        .mind-content {
+
+            display: grid;
+
+            grid-template-columns: 0.8fr 1.2fr;
+
+            gap: 20px;
+
+            align-items: center;
+
+        }
+
+
+        /* ================= INFO CARDS ================= */
+
+        .mind-info {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 12px;
+
+        }
+
+        .mind-item {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+            padding: 17px;
+
+            border-radius: 16px;
+
+            background:
+                rgba(255,255,255,0.06);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.1);
+
+            transition: 0.4s;
+
+            cursor: pointer;
+
+        }
+
+        .mind-item:hover {
+
+            transform:
+                translateX(10px)
+                scale(1.03);
+
+            background:
+                rgba(155,93,229,0.2);
+
+            border-color: #00f5d4;
+
+            box-shadow:
+                0 10px 30px rgba(0,245,212,0.15);
+
+        }
+
+        .mind-icon {
+
+            min-width: 55px;
+
+            height: 55px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            border-radius: 15px;
+
+            font-size: 25px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #9b5de555,
+                    #f15bb555
+                );
+
+        }
+
+        .mind-item h3 {
+
+            margin-bottom: 5px;
+
+        }
+
+        .mind-item p {
+
+            color: #aaa;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ================= SVG ================= */
+
+        #mindSvg {
+
+            width: 100%;
+
+            max-width: 550px;
+
+        }
+
+        #mindPolygon {
+
+            animation:
+                polygonPulse
+                4s infinite ease-in-out;
+
+            transform-origin:
+                250px 200px;
+
+        }
+
+        @keyframes polygonPulse {
+
+            0%,100% {
+
+                opacity: 0.6;
+
+                transform:
+                    scale(0.95);
+
+            }
+
+            50% {
+
+                opacity: 1;
+
+                transform:
+                    scale(1.05);
+
+            }
+
+        }
+
+
+        #brainGroup {
+
+            animation:
+                brainFloat
+                3s infinite ease-in-out;
+
+        }
+
+        @keyframes brainFloat {
+
+            0%,100% {
+
+                transform:
+                    translate(250px,200px)
+                    scale(1);
+
+            }
+
+            50% {
+
+                transform:
+                    translate(250px,200px)
+                    scale(1.08);
+
+            }
+
+        }
+
+
+        .visual-caption {
+
+            text-align: center;
+
+            margin-top: -5px;
+
+        }
+
+        .visual-caption span {
+
+            color: #00f5d4;
+
+            letter-spacing: 3px;
+
+            font-size: 11px;
+
+        }
+
+        .visual-caption strong {
+
+            display: block;
+
+            margin-top: 6px;
+
+        }
+
+
+        /* ================= QUIZ ================= */
+
+        .quiz {
+
+            margin-top: 30px;
+
+            padding: 35px;
+
+        }
+
+        .quiz-title {
+
+            text-align: center;
+
+            margin-bottom: 25px;
+
+        }
+
+        .quiz-title h2 {
+
+            font-size: 30px;
+
+        }
+
+        .quiz-title p {
+
+            color: #aaa;
+
+            margin-top: 8px;
+
+        }
+
+
+        .progress-container {
+
+            width: 100%;
+
+            height: 10px;
+
+            background: rgba(255,255,255,0.1);
+
+            border-radius: 20px;
+
+            margin-bottom: 25px;
+
+            overflow: hidden;
+
+        }
+
+        .progress {
+
+            height: 100%;
+
+            width: 0%;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #00f5d4,
+                    #9b5de5
+                );
+
+            transition: 0.5s;
+
+        }
+
+
+        #questionNumber {
+
+            color: #00f5d4;
+
+            font-size: 14px;
+
+        }
+
+        #question {
+
+            font-size: 25px;
+
+            margin-top: 10px;
+
+            line-height: 1.4;
+
+        }
+
+
+        .options {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2,1fr);
+
+            gap: 15px;
+
+            margin-top: 25px;
+
+        }
+
+        .option {
+
+            padding: 18px;
+
+            border-radius: 15px;
+
+            background:
+                rgba(255,255,255,0.06);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.15);
+
+            color: white;
+
+            cursor: pointer;
+
+            font-size: 16px;
+
+            transition: 0.3s;
+
+            text-align: left;
+
+        }
+
+        .option:hover {
+
+            transform:
+                translateY(-5px);
+
+            border-color:
+                #00f5d4;
+
+            background:
+                rgba(0,245,212,0.1);
+
+        }
+
+        .option.selected {
+
+            background:
+                rgba(0,245,212,0.2);
+
+            border-color:
+                #00f5d4;
+
+            transform:
+                scale(1.02);
+
+        }
+
+
+        /* ================= BUTTON ================= */
+
+        .button-area {
+
+            text-align: center;
+
+            margin-top: 25px;
+
+        }
+
+        button {
+
+            border: none;
+
+            padding: 14px 30px;
+
+            border-radius: 30px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #00f5d4,
+                    #9b5de5
+                );
+
+            color: white;
+
+            font-weight: bold;
+
+            font-size: 15px;
+
+            cursor: pointer;
+
+            transition: 0.3s;
+
+        }
+
+        button:hover {
+
+            transform:
+                translateY(-3px)
+                scale(1.05);
+
+            box-shadow:
+                0 10px 30px
+                rgba(0,245,212,0.3);
+
+        }
+
+        button:disabled {
+
+            opacity: 0.4;
+
+            cursor: not-allowed;
+
+            transform: none;
+
+            box-shadow: none;
+
+        }
+
+
+        /* ================= RESULT ================= */
+
+        .result {
+
+            margin-top: 30px;
+
+            padding: 40px;
+
+            text-align: center;
+
+            display: none;
+
+        }
+
+        .result h2 {
+
+            font-size: 32px;
+
+            color: #00f5d4;
+
+        }
+
+        #finalScore {
+
+            font-size: 60px;
+
+            font-weight: bold;
+
+            margin: 15px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #00f5d4,
+                    #f15bb5
+                );
+
+            -webkit-background-clip: text;
+
+            color: transparent;
+
+        }
+
+        #resultMessage {
+
+            color: #ccc;
+
+            max-width: 650px;
+
+            margin: auto;
+
+            line-height: 1.7;
+
+        }
+
+
+        /* ================= FOOTER ================= */
+
+        footer {
+
+            text-align: center;
+
+            color: #777;
+
+            padding: 30px;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ================= RESPONSIVE ================= */
+
+        @media(max-width:800px) {
+
+            header h1 {
+                font-size: 35px;
+            }
+
+            .mind-content {
+                grid-template-columns: 1fr;
+            }
+
+            .options {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- BACKGROUND ANIMATIONS -->
+
+    <div class="shape shape1"></div>
+
+    <div class="shape shape2"></div>
+
+    <div class="shape shape3"></div>
+
+
+    <div class="container">
+
+
+        <!-- ================= HEADER ================= -->
+
+        <header>
+
+            <div class="logo">
+
+                🧠 MINDSENSE
+
+            </div>
+
+            <h1>
+
+                Customer Mood Assessment
+
+            </h1>
+
+            <p>
+
+                A simple interactive psychology-based experience
+                to understand your current mood.
+
+            </p>
+
+        </header>
+
+
+        <!-- ================= MIND VISUALIZATION ================= -->
+
+        <section class="mind-visual glass">
+
+
+            <div class="visual-header">
+
+                <span>
+
+                    MENTAL WELLNESS VISUALIZATION
+
+                </span>
+
+                <h2>
+
+                    🧠 Your Mind at a Glance
+
+                </h2>
+
+                <p>
+
+                    Focus on the visualization and explore how
+                    different aspects of your current mood connect.
+
+                </p>
+
+            </div>
+
+
+            <div class="mind-content">
+
+
+                <!-- LEFT -->
+
+                <div class="mind-info">
+
+
+                    <div class="mind-item">
+
+                        <div class="mind-icon">
+
+                            🎯
+
+                        </div>
+
+                        <div>
+
+                            <h3>Focus</h3>
+
+                            <p>
+                                How concentrated and attentive
+                                you feel at the moment.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mind-item">
+
+                        <div class="mind-icon">
+
+                            😊
+
+                        </div>
+
+                        <div>
+
+                            <h3>Mood</h3>
+
+                            <p>
+                                Your current emotional state
+                                and positivity.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mind-item">
+
+                        <div class="mind-icon">
+
+                            ⚡
+
+                        </div>
+
+                        <div>
+
+                            <h3>Energy</h3>
+
+                            <p>
+                                Your current level of energy
+                                and motivation.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mind-item">
+
+                        <div class="mind-icon">
+
+                            😌
+
+                        </div>
+
+                        <div>
+
+                            <h3>Calmness</h3>
+
+                            <p>
+                                How relaxed and comfortable
+                                you currently feel.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- RIGHT SVG -->
+
+                <div class="mind-chart">
+
+
+                    <svg
+                        id="mindSvg"
+                        viewBox="0 0 500 400"
+                        preserveAspectRatio="xMidYMid meet"
+                    >
+
+
+                        <!-- Outer circles -->
+
+                        <circle
+                            cx="250"
+                            cy="200"
+                            r="150"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.12)"
+                            stroke-width="2"
+                        />
+
+                        <circle
+                            cx="250"
+                            cy="200"
+                            r="110"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.12)"
+                            stroke-width="2"
+                        />
+
+                        <circle
+                            cx="250"
+                            cy="200"
+                            r="70"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.15)"
+                            stroke-width="2"
+                        />
+
+
+                        <!-- Connecting lines -->
+
+                        <line
+                            x1="250"
+                            y1="50"
+                            x2="250"
+                            y2="350"
+                            stroke="rgba(255,255,255,0.12)"
+                            stroke-width="2"
+                        />
+
+                        <line
+                            x1="100"
+                            y1="200"
+                            x2="400"
+                            y2="200"
+                            stroke="rgba(255,255,255,0.12)"
+                            stroke-width="2"
+                        />
+
+                        <line
+                            x1="144"
+                            y1="94"
+                            x2="356"
+                            y2="306"
+                            stroke="rgba(255,255,255,0.12)"
+                            stroke-width="2"
+                        />
+
+                        <line
+                            x1="356"
+                            y1="94"
+                            x2="144"
+                            y2="306"
+                            stroke="rgba(255,255,255,0.12)"
+                            stroke-width="2"
+                        />
+
+
+                        <!-- Psychology profile -->
+
+                        <polygon
+                            id="mindPolygon"
+                            points="
+                                250,100
+                                340,150
+                                320,240
+                                250,290
+                                160,240
+                                150,150
+                            "
+                            fill="rgba(0,245,212,0.20)"
+                            stroke="#00f5d4"
+                            stroke-width="3"
+                            stroke-linejoin="round"
+                        />
+
+
+                        <!-- Brain -->
+
+                        <g
+                            id="brainGroup"
+                            transform="translate(250,200)"
+                        >
+
+                            <circle
+                                cx="0"
+                                cy="0"
+                                r="45"
+                                fill="rgba(155,93,229,0.3)"
+                                stroke="#9b5de5"
+                                stroke-width="3"
+                            />
+
+                            <path
+                                d="
+                                M -20,-5
+                                C -40,-30 -10,-45 5,-25
+                                C 30,-45 45,-10 25,5
+                                C 45,25 15,40 0,25
+                                C -20,45 -40,20 -25,0
+                                C -40,-15 -35,-30 -20,-5
+                                "
+                                fill="rgba(241,91,181,0.45)"
+                                stroke="white"
+                                stroke-width="2"
+                            />
+
+                            <circle
+                                cx="-12"
+                                cy="-5"
+                                r="4"
+                                fill="#00f5d4"
+                            />
+
+                            <circle
+                                cx="12"
+                                cy="5"
+                                r="4"
+                                fill="#fee440"
+                            />
+
+                        </g>
+
+
+                        <!-- Labels -->
+
+                        <text
+                            x="250"
+                            y="30"
+                            text-anchor="middle"
+                            fill="white"
+                            font-size="15"
+                            font-weight="bold"
+                        >
+                            FOCUS
+                        </text>
+
+                        <text
+                            x="440"
+                            y="205"
+                            text-anchor="middle"
+                            fill="white"
+                            font-size="15"
+                            font-weight="bold"
+                        >
+                            MOOD
+                        </text>
+
+                        <text
+                            x="250"
+                            y="385"
+                            text-anchor="middle"
+                            fill="white"
+                            font-size="15"
+                            font-weight="bold"
+                        >
+                            ENERGY
+                        </text>
+
+                        <text
+                            x="60"
+                            y="205"
+                            text-anchor="middle"
+                            fill="white"
+                            font-size="15"
+                            font-weight="bold"
+                        >
+                            CALM
+                        </text>
+
+
+                        <!-- Decorative points -->
+
+                        <circle
+                            cx="250"
+                            cy="50"
+                            r="5"
+                            fill="#00f5d4"
+                        />
+
+                        <circle
+                            cx="400"
+                            cy="200"
+                            r="5"
+                            fill="#f15bb5"
+                        />
+
+                        <circle
+                            cx="250"
+                            cy="350"
+                            r="5"
+                            fill="#fee440"
+                        />
+
+                        <circle
+                            cx="100"
+                            cy="200"
+                            r="5"
+                            fill="#9b5de5"
+                        />
+
+                    </svg>
+
+
+                    <div class="visual-caption">
+
+                        <span>
+
+                            MENTAL WELLNESS MAP
+
+                        </span>
+
+                        <strong>
+
+                            Focus • Reflect • Understand
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= QUIZ ================= -->
+
+        <section class="quiz glass">
+
+
+            <div class="quiz-title">
+
+                <h2>
+
+                    🌿 How Are You Feeling Today?
+
+                </h2>
+
+                <p>
+
+                    Answer these simple everyday questions
+                    based on how you feel right now.
+
+                </p>
+
+            </div>
+
+
+            <!-- Progress -->
+
+            <div class="progress-container">
+
+                <div
+                    class="progress"
+                    id="progress"
+                ></div>
+
+            </div>
+
+
+            <div id="questionNumber">
+
+                Question 1 of 10
+
+            </div>
+
+
+            <h2 id="question">
+
+                How are you feeling today?
+
+            </h2>
+
+
+            <div
+                class="options"
+                id="options"
+            ></div>
+
+
+            <div class="button-area">
+
+                <button
+                    id="nextBtn"
+                    onclick="nextQuestion()"
+                    disabled
+                >
+
+                    Next Question →
+
+                </button>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ================= RESULT ================= -->
+
+        <section
+            class="result glass"
+            id="result"
+        >
+
+            <h2>
+
+                🧠 Your Mood Result
+
+            </h2>
+
+
+            <div id="finalScore">
+
+                0%
+
+            </div>
+
+
+            <p id="resultMessage"></p>
+
+
+            <!-- D3 RESULT SVG -->
+
+            <svg
+                id="scoreChart"
+                viewBox="0 0 500 280"
+                style="
+                    width:100%;
+                    max-width:600px;
+                    margin:25px auto;
+                    display:block;
+                "
+            ></svg>
+
+
+            <button onclick="restartQuiz()">
+
+                🔄 Take Again
+
+            </button>
+
+        </section>
+
+
+        <footer>
+
+            MindSense • Interactive Psychology Experience
+
+            <br><br>
+
+            This is a general mood check for learning and
+            self-reflection, not a clinical psychological diagnosis.
+
+        </footer>
+
+
+    </div>
+
+
+    <script>
+
+
+        /* =====================================================
+           QUESTIONS
+        ===================================================== */
+
+        const questions = [
+
+            {
+                question:
+                    "How are you feeling today?",
+
+                options: [
+                    "😄 Very happy",
+                    "🙂 Good",
+                    "😐 Okay",
+                    "😔 Low"
+                ],
+
+                scores: [10, 7, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How well did you sleep last night?",
+
+                options: [
+                    "😴 Very well",
+                    "🙂 Well",
+                    "😐 Average",
+                    "😕 Poorly"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How energetic do you feel right now?",
+
+                options: [
+                    "⚡ Very energetic",
+                    "😊 Energetic",
+                    "😐 Normal",
+                    "😴 Very tired"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How stressed do you feel today?",
+
+                options: [
+                    "😌 Very relaxed",
+                    "🙂 Slightly stressed",
+                    "😐 Moderately stressed",
+                    "😰 Very stressed"
+                ],
+
+                scores: [10, 7, 4, 1]
+            },
+
+
+            {
+                question:
+                    "How focused do you feel right now?",
+
+                options: [
+                    "🎯 Very focused",
+                    "🙂 Mostly focused",
+                    "😐 Sometimes distracted",
+                    "😵 Very distracted"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How motivated are you today?",
+
+                options: [
+                    "🔥 Very motivated",
+                    "😊 Motivated",
+                    "😐 A little motivated",
+                    "😴 Not motivated"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How do you feel about your day so far?",
+
+                options: [
+                    "🌟 Excellent",
+                    "😊 Good",
+                    "😐 Average",
+                    "😔 Difficult"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How comfortable do you feel around other people today?",
+
+                options: [
+                    "🤗 Very comfortable",
+                    "🙂 Comfortable",
+                    "😐 Neutral",
+                    "🙁 Uncomfortable"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "How easily can you relax at the moment?",
+
+                options: [
+                    "😌 Very easily",
+                    "🙂 Easily",
+                    "😐 Sometimes",
+                    "😣 Very difficult"
+                ],
+
+                scores: [10, 8, 5, 2]
+            },
+
+
+            {
+                question:
+                    "What best describes your overall mood right now?",
+
+                options: [
+                    "🌈 Positive",
+                    "😊 Mostly positive",
+                    "😐 Neutral",
+                    "🌧️ Low"
+                ],
+
+                scores: [10, 8, 5, 2]
+            }
+
+        ];
+
+
+        /* =====================================================
+           QUIZ VARIABLES
+        ===================================================== */
+
+        let currentQuestion = 0;
+
+        let selectedAnswer = null;
+
+        let totalScore = 0;
+
+
+        /* =====================================================
+           LOAD QUESTION
+        ===================================================== */
+
+        function loadQuestion() {
+
+
+            selectedAnswer = null;
+
+
+            const q = questions[currentQuestion];
+
+
+            document.getElementById("questionNumber")
+                .textContent =
+                `Question ${currentQuestion + 1} of ${questions.length}`;
+
+
+            document.getElementById("question")
+                .textContent =
+                q.question;
+
+
+            const optionsContainer =
+                document.getElementById("options");
+
+
+            optionsContainer.innerHTML = "";
+
+
+            q.options.forEach((option, index) => {
+
+
+                const div =
+                    document.createElement("div");
+
+
+                div.className = "option";
+
+
+                div.textContent = option;
+
+
+                div.onclick = function() {
+
+                    selectAnswer(index, div);
+
+                };
+
+
+                optionsContainer.appendChild(div);
+
+            });
+
+
+            document.getElementById("nextBtn")
+                .disabled = true;
+
+
+            const progress =
+                ((currentQuestion) /
+                questions.length) * 100;
+
+
+            document.getElementById("progress")
+                .style.width =
+                progress + "%";
+
+        }
+
+
+        /* =====================================================
+           SELECT ANSWER
+        ===================================================== */
+
+        function selectAnswer(index, element) {
+
+
+            const allOptions =
+                document.querySelectorAll(".option");
+
+
+            allOptions.forEach(option => {
+
+                option.classList.remove("selected");
+
+            });
+
+
+            element.classList.add("selected");
+
+
+            selectedAnswer = index;
+
+
+            document.getElementById("nextBtn")
+                .disabled = false;
+
+        }
+
+
+        /* =====================================================
+           NEXT QUESTION
+        ===================================================== */
+
+        function nextQuestion() {
+
+
+            if (selectedAnswer === null) {
+
+                return;
+
+            }
+
+
+            const question =
+                questions[currentQuestion];
+
+
+            totalScore +=
+                question.scores[selectedAnswer];
+
+
+            currentQuestion++;
+
+
+            if (
+                currentQuestion <
+                questions.length
+            ) {
+
+                loadQuestion();
+
+            }
+
+            else {
+
+                showResult();
+
+            }
+
+        }
+
+
+        /* =====================================================
+           SHOW RESULT
+        ===================================================== */
+
+        function showResult() {
+
+
+            document.querySelector(".quiz")
+                .style.display = "none";
+
+
+            document.getElementById("result")
+                .style.display = "block";
+
+
+            document.getElementById("progress")
+                .style.width = "100%";
+
+
+            const maximumScore =
+                questions.length * 10;
+
+
+            const percentage =
+                Math.round(
+                    (totalScore /
+                    maximumScore) * 100
+                );
+
+
+            document.getElementById("finalScore")
+                .textContent =
+                percentage + "%";
+
+
+            let message;
+
+
+            if (percentage >= 80) {
+
+                message =
+                    "Your responses indicate a positive and energetic mood today. You appear to be feeling generally comfortable, motivated and balanced. 🌟";
+
+            }
+
+            else if (percentage >= 60) {
+
+                message =
+                    "Your responses indicate a generally balanced mood. You may be feeling okay overall, with some areas that could use a little attention. 😊";
+
+            }
+
+            else if (percentage >= 40) {
+
+                message =
+                    "Your responses suggest that you may be having a somewhat mixed day. Taking a short break, relaxing or doing something you enjoy may help. 🌱";
+
+            }
+
+            else {
+
+                message =
+                    "Your responses suggest that you may be feeling low or stressed today. Consider taking some time to rest, relax and connect with someone you trust. 💙";
+
+            }
+
+
+            document.getElementById("resultMessage")
+                .textContent =
+                message;
+
+
+            createScoreChart(percentage);
+
+        }
+
+
+        /* =====================================================
+           D3 SCORE VISUALIZATION
+        ===================================================== */
+
+        function createScoreChart(score) {
+
+
+            const svg =
+                d3.select("#scoreChart");
+
+
+            svg.selectAll("*")
+                .remove();
+
+
+            const centerX = 250;
+
+            const centerY = 140;
+
+            const radius = 100;
+
+
+            /* Background circle */
+
+            svg.append("circle")
+
+                .attr("cx", centerX)
+
+                .attr("cy", centerY)
+
+                .attr("r", radius)
+
+                .attr("fill", "none")
+
+                .attr(
+                    "stroke",
+                    "rgba(255,255,255,0.1)"
+                )
+
+                .attr(
+                    "stroke-width",
+                    18
+                );
+
+
+            /* Score arc */
+
+            const arc =
+                d3.arc()
+
+                .innerRadius(82)
+
+                .outerRadius(100)
+
+                .startAngle(0)
+
+                .endAngle(
+                    (score / 100) *
+                    Math.PI * 2
+                );
+
+
+            svg.append("g")
+
+                .attr(
+                    "transform",
+                    `translate(${centerX},${centerY})`
+                )
+
+                .append("path")
+
+                .attr(
+                    "d",
+                    arc
+                )
+
+                .attr(
+                    "fill",
+                    "#00f5d4"
+                )
+
+                .transition()
+
+                .duration(1500)
+
+                .attrTween(
+                    "d",
+                    function() {
+
+                        const interpolate =
+                            d3.interpolate(
+                                0,
+                                score / 100
+                            );
+
+                        return function(t) {
+
+                            const a =
+                                d3.arc()
+
+                                .innerRadius(82)
+
+                                .outerRadius(100)
+
+                                .startAngle(0)
+
+                                .endAngle(
+                                    interpolate(t) *
+                                    Math.PI * 2
+                                );
+
+                            return a();
+
+                        };
+
+                    }
+                );
+
+
+            /* Score text */
+
+            svg.append("text")
+
+                .attr(
+                    "x",
+                    centerX
+                )
+
+                .attr(
+                    "y",
+                    centerY + 10
+                )
+
+                .attr(
+                    "text-anchor",
+                    "middle"
+                )
+
+                .attr(
+                    "fill",
+                    "white"
+                )
+
+                .attr(
+                    "font-size",
+                    "32px"
+                )
+
+                .attr(
+                    "font-weight",
+                    "bold"
+                )
+
+                .text(score + "%");
+
+
+            svg.append("text")
+
+                .attr(
+                    "x",
+                    centerX
+                )
+
+                .attr(
+                    "y",
+                    centerY + 35
+                )
+
+                .attr(
+                    "text-anchor",
+                    "middle"
+                )
+
+                .attr(
+                    "fill",
+                    "#aaa"
+                )
+
+                .attr(
+                    "font-size",
+                    "13px"
+                )
+
+                .text("Mood Score");
+
+
+            /* Decorative dots */
+
+            for (
+                let i = 0;
+                i < 12;
+                i++
+            ) {
+
+                const angle =
+                    (i / 12) *
+                    Math.PI * 2;
+
+
+                const x =
+                    centerX +
+                    Math.cos(angle) *
+                    120;
+
+
+                const y =
+                    centerY +
+                    Math.sin(angle) *
+                    120;
+
+
+                svg.append("circle")
+
+                    .attr(
+                        "cx",
+                        x
+                    )
+
+                    .attr(
+                        "cy",
+                        y
+                    )
+
+                    .attr(
+                        "r",
+                        3
+                    )
+
+                    .attr(
+                        "fill",
+                        "#9b5de5"
+                    )
+
+                    .attr(
+                        "opacity",
+                        0.7
+                    );
+
+            }
+
+        }
+
+
+        /* =====================================================
+           RESTART
+        ===================================================== */
+
+        function restartQuiz() {
+
+
+            currentQuestion = 0;
+
+            selectedAnswer = null;
+
+            totalScore = 0;
+
+
+            document.getElementById("result")
+                .style.display = "none";
+
+
+            document.querySelector(".quiz")
+                .style.display = "block";
+
+
+            loadQuestion();
+
+
+            window.scrollTo({
+
+                top: 0,
+
+                behavior: "smooth"
+
+            });
+
+        }
+
+
+        /* =====================================================
+           MIND VISUALIZATION ANIMATION
+        ===================================================== */
+
+        const mindPolygon =
+            document.getElementById(
+                "mindPolygon"
+            );
+
+
+        function updateMindVisualization() {
+
+
+            const focus =
+                70 + Math.random() * 50;
+
+
+            const mood =
+                70 + Math.random() * 40;
+
+
+            const energy =
+                65 + Math.random() * 45;
+
+
+            const calm =
+                70 + Math.random() * 40;
+
+
+            const centerX = 250;
+
+            const centerY = 200;
+
+
+            const points = [
+
+                `${centerX},${centerY - focus}`,
+
+                `${centerX + mood},${centerY - mood / 2}`,
+
+                `${centerX + energy},${centerY + energy / 2}`,
+
+                `${centerX},${centerY + energy}`,
+
+                `${centerX - calm},${centerY + calm / 2}`,
+
+                `${centerX - mood},${centerY - mood / 2}`
+
+            ];
+
+
+            mindPolygon.setAttribute(
+
+                "points",
+
+                points.join(" ")
+
+            );
+
+        }
+
+
+        setInterval(
+
+            updateMindVisualization,
+
+            2500
+
+        );
+
+
+        /* =====================================================
+           START
+        ===================================================== */
+
+        loadQuestion();
+
+        updateMindVisualization();
+
+
+    </script>
+
+
+</body>
+
+</html>
